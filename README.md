@@ -1,3 +1,5 @@
+![Banner](banner.png)
+
 # misconfig-ConfigSchemaValidator
 A command-line tool that validates configuration files against a predefined schema (e.g., JSON Schema or YAML schema) to ensure data types and required fields are correct. Leverages `jsonschema` library for JSON and `ruamel.yaml` for YAML validation. - Focused on Check for misconfigurations in configuration files or infrastructure definitions
 
