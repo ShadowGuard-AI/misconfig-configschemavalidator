@@ -166,6 +166,16 @@ def main():
             logging.error("Invalid schema file type.")
             sys.exit(1)
 
+        # An empty file loads as None. Name it as empty instead of
+        # passing None on to the validator, where it fails with an
+        # internal library message that never mentions the empty file.
+        if config_data is None:
+            logging.error(f"Configuration file is empty: {args.config_file}")
+            sys.exit(1)
+        if schema_data is None:
+            logging.error(f"Schema file is empty: {args.schema_file}")
+            sys.exit(1)
+
         # Validate the configuration
         validate_config(config_data, schema_data)
         logging.info("Validation successful.")
