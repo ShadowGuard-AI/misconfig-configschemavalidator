@@ -68,6 +68,10 @@ def load_yaml(file_path):
         ruamel.yaml.parser.ParserError: If the file contains invalid YAML.
         ruamel.yaml.scanner.ScannerError: If the file contains invalid YAML.
     """
+    # ruamel reads YAML 1.2, where on, off, and yes are plain
+    # strings. Most of my sibling tools use PyYAML, which reads
+    # the same words as booleans, so a config can pass a schema
+    # here and fail the equivalent check there on the same text.
     yaml = YAML(typ='safe') # Use safe load to prevent arbitrary code execution
     try:
         with open(file_path, 'r') as f:
@@ -95,11 +99,22 @@ def validate_config(config_data, schema_data):
         jsonschema.exceptions.ValidationError: If the configuration is invalid according to the schema.
     """
     try:
+        # The schema itself is never checked as a schema. A document
+        # with a misspelled keyword, a type name that does not exist,
+        # is mostly ignored by the validator or raises a schema error
+        # that main reports as an unexpected error, and a schema
+        # holding an empty mapping validates every config put to it.
+        # Format keywords are also inert here, because validate is
+        # called without a format checker.
         validate(instance=config_data, schema=schema_data)
         logging.info("Configuration is valid according to the schema.")
         return True
     except ValidationError as e:
         logging.error(f"Configuration is invalid: {e}")
+        # Despite the docstring above, this function never returns
+        # False. An invalid config travels as the raised error, and
+        # the False wording survives from an earlier shape; callers
+        # who wrap the call expecting a boolean get an exception.
         raise
 
 def determine_file_type(file_path, arg_type=None):
@@ -172,6 +187,11 @@ def main():
         if config_data is None:
             logging.error(f"Configuration file is empty: {args.config_file}")
             sys.exit(1)
+        # Only a literally empty schema file is refused. A schema
+        # file holding an empty mapping passes this point and then
+        # accepts any configuration at all, which is a formally
+        # correct schema and a practically empty check, and my
+        # output calls the result valid either way.
         if schema_data is None:
             logging.error(f"Schema file is empty: {args.schema_file}")
             sys.exit(1)
